@@ -7,4 +7,7 @@ final case class Env(visited: List[String], unvisited: List[String]) {
 
 object Env {
   def default: Env = Env(Nil, Nil)
+
+  def fromUrls(urls: List[String]): Env =
+    Env(Nil, urls)
 }
