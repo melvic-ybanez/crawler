@@ -1,16 +1,17 @@
 package com.melvic.crawler
 
+import com.melvic.crawler.Crawler.ZRecordSet
 import org.jsoup.Jsoup
 import zhttp.service.Client
 import zio.ZIO
 
 final case class Crawler(env: Env) {
-  def crawl: AppEffect[List[(String, String)]] = {
+  def crawl: ZRecordSet = {
     def recurse(
         visited: List[String],
-        unvisited: AppEffect[List[String]],
-        acc: AppEffect[List[(String, String)]],
-      ): AppEffect[List[(String, String)]] =
+        unvisited: Program[List[String]],
+        acc: ZRecordSet,
+      ): ZRecordSet =
       unvisited.flatMap {
         case Nil                    => acc
         case url :: restOfUnvisited =>
@@ -23,13 +24,15 @@ final case class Crawler(env: Env) {
     recurse(env.visited, ZIO.succeed(env.unvisited), ZIO.succeed(Nil))
   }
 
-  def fetchData(url: String)(implicit env: Env): AppEffect[(String, List[String])] = for {
+  def fetchData(url: String)(implicit env: Env): Program[(String, List[String])] = for {
     res  <- Client.request(url)
     data <- res.bodyAsString
   } yield (data, Crawler.fetchLinks(data))
 }
 
 object Crawler {
+  type ZRecordSet = Program[List[(String, String)]]
+
   def fetchLinks(content: String)(implicit env: Env): List[String] = {
     val doc  = Jsoup.parse(content)
     val link = doc.select("a")

@@ -18,7 +18,7 @@ object Output {
   def error(errorMessage: String): Output =
     Output(Nil, error = Some(errorMessage))
 
-  def fromLinksEffect(linksEffect: AppEffect[List[(String, String)]]): AppEffect[Output] =
+  def fromLinksEffect(linksEffect: Program[List[(String, String)]]): Program[Output] =
     linksEffect.either.map {
       case Right(links) => fromResults(links.map { case (data, url) => Record(data, url) })
       case Left(error)  => Output.error(error.getMessage)
