@@ -9,4 +9,13 @@ object Dependencies {
 
   val `zio-test`     = "dev.zio" %% "zio-test"     % ZioVersion % Test
   val `zio-test-sbt` = "dev.zio" %% "zio-test-sbt" % ZioVersion % Test
+
+  val circeVersion = "0.14.1"
+  val circeDependencies = Seq(
+    "io.circe" %% "circe-core",
+    "io.circe" %% "circe-generic",
+    "io.circe" %% "circe-parser"
+  ).map(_ % circeVersion)
+
+  val jsoupDeps = "org.jsoup" % "jsoup" % "1.15.2"
 }

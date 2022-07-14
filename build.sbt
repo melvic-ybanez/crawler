@@ -4,20 +4,13 @@ import Dependencies._
 ThisBuild / organization := "com.melvic"
 ThisBuild / version := "0.1-SNAPSHOT"
 
-val circeVersion = "0.14.1"
-val circeDependencies = Seq(
-  "io.circe" %% "circe-core",
-  "io.circe" %% "circe-generic",
-  "io.circe" %% "circe-parser"
-).map(_ % circeVersion)
-
 lazy val root = (project in file("."))
   .enablePlugins(JavaAppPackaging)
   .settings(BuildHelper.stdSettings)
   .settings(
     name := "crawler",
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    libraryDependencies ++= Seq(`zio-test`, `zio-test-sbt`, `zio-http`, `zio-http-test`) ++ circeDependencies,
+    libraryDependencies ++= Seq(`zio-test`, `zio-test-sbt`, `zio-http`, `zio-http-test`) ++ circeDependencies :+ jsoupDeps,
   )
   .settings(
     Docker / version          := version.value,

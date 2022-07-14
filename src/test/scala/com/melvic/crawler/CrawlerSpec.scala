@@ -9,7 +9,7 @@ object CrawlerSpec extends DefaultRunnableSpec {
     testM("200 ok") {
       checkAllM(Gen.fromIterable(List("text", "json"))) { uri =>
         val request = Request(Method.GET, URL(!! / uri))
-        assertM(Crawler.api(request).map(_.status))(equalTo(Status.OK))
+        assertM(Application.api(request).map(_.status))(equalTo(Status.OK))
       }
     },
   )
