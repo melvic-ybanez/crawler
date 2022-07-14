@@ -1,37 +1,12 @@
 package com.melvic.crawler
 
-import com.melvic.crawler.Crawler.ZRecordSet
 import org.jsoup.Jsoup
-import zhttp.service.Client
+import zhttp.http.Response
+import zhttp.service.{ChannelFactory, Client, EventLoopGroup}
 import zio.ZIO
 
-final case class Crawler(env: Env) {
-  def crawl: ZRecordSet = {
-    def recurse(
-        visited: List[String],
-        unvisited: Program[List[String]],
-        acc: ZRecordSet,
-      ): ZRecordSet =
-      unvisited.flatMap {
-        case Nil                    => acc
-        case url :: restOfUnvisited =>
-          val newVisited           = url :: visited
-          implicit val newEnv: Env = Env(newVisited, restOfUnvisited)
-          val result               = fetchData(url)
-          val newAcc = acc.flatMap(xs => result.map { case (data, _) => (data, url) :: xs })
-          recurse(newVisited, result.map { case (_, urls) => restOfUnvisited ++ urls }, newAcc)
-      }
-    recurse(env.visited, ZIO.succeed(env.unvisited), ZIO.succeed(Nil))
-  }
-
-  def fetchData(url: String)(implicit env: Env): Program[(String, List[String])] = for {
-    res  <- Client.request(url)
-    data <- res.bodyAsString
-  } yield (data, Crawler.fetchLinks(data))
-}
-
 object Crawler {
-  type ZRecordSet = Program[List[(String, String)]]
+  type ZRecordData = Program[List[(String, String)]]
 
   def fetchLinks(content: String)(implicit env: Env): List[String] = {
     val doc  = Jsoup.parse(content)
@@ -41,5 +16,35 @@ object Crawler {
       if (env.isNew(url)) url :: urls
       else urls
     }
+  }
+
+  def fetchData(url: String)(implicit env: Env): Program[(String, List[String])] = for {
+    res  <- Client.request(url)
+    data <- res.bodyAsString
+  } yield (data, Crawler.fetchLinks(data))
+
+  def crawl(env: Env): ZRecordData = {
+    def recurse(
+        visited: List[String],
+        unvisited: Program[List[String]],
+        acc: ZRecordData,
+      ): ZRecordData =
+      unvisited.flatMap {
+        case Nil                    => acc
+        case url :: restOfUnvisited =>
+          val newVisited           = url :: visited
+          implicit val newEnv: Env = Env(newVisited, restOfUnvisited)
+          val result               = Crawler.fetchData(url)
+          val newAcc = acc.flatMap(xs => result.map { case (data, _) => (data, url) :: xs })
+          recurse(newVisited, result.map { case (_, urls) => restOfUnvisited ++ urls }, newAcc)
+      }
+    recurse(env.visited, ZIO.succeed(env.unvisited), ZIO.succeed(Nil))
+  }
+
+  def crawlUrls(urls: List[String]): ZIO[zio.ZEnv, Throwable, Response] = {
+    val env          = ChannelFactory.auto ++ EventLoopGroup.auto()
+    val outputEffect =
+      Output.toJson(Output.fromRecordData(crawl(Env(Nil, urls)))).provideCustomLayer(env)
+    outputEffect.map(Response.json)
   }
 }

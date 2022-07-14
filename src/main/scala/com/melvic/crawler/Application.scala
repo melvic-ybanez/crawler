@@ -2,16 +2,17 @@ package com.melvic.crawler
 
 import io.circe.parser._
 import zhttp.http._
-import zhttp.service.{ChannelFactory, EventLoopGroup, Server}
+import zhttp.service.Server
 import zio._
 
 object Application extends App {
-  val api: HttpApp[Any, Throwable] = Http.collectZIO[Request] {
+  val api: HttpApp[ZEnv, Throwable] = Http.collectZIO[Request] {
     case req @ Method.POST -> !! / "api" / "crawl" =>
-      req.bodyAsString.map { body =>
+      req.bodyAsString.flatMap { body =>
         decode[Input](body) match {
-          case Left(error) => Response.text(error.getMessage).setStatus(Status.BAD_REQUEST)
-          case Right(body) => Response.text(body.urls.mkString(" "))
+          case Left(error)        =>
+            ZIO.succeed(Response.text(error.getMessage).setStatus(Status.BAD_REQUEST))
+          case Right(Input(urls)) => Crawler.crawlUrls(urls)
         }
       }
   }
