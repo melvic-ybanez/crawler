@@ -26,7 +26,7 @@ object Output {
   def fromZState(zState: ZState): Program[Output] =
     zState.either.map {
       case Right(state) =>
-        fromResults(state.table.map { case (url, data) => Record(url, "") }.toList)
+        fromResults(state.table.map { case (url, data) => Record(url, data.getOrElse("")) }.toList)
       case Left(error)  => Output.error(error.getMessage)
     }
 
