@@ -20,9 +20,8 @@ object Application extends App {
 
   def crawlUrls(urls: List[String]): ZIO[zio.ZEnv, Throwable, Response] = {
     val zEnv         = ChannelFactory.auto ++ EventLoopGroup.auto()
-    val crawlerEnv   = Env.fromUrls(urls)
     val outputEffect =
-      Output.toJson(Output.fromRecordData(crawl(crawlerEnv))).provideCustomLayer(zEnv)
+      Output.toJson(Output.fromZState(crawl(urls.toSet))).provideCustomLayer(zEnv)
     outputEffect.map(Response.json)
   }
 

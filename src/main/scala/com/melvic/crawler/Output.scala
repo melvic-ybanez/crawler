@@ -1,6 +1,6 @@
 package com.melvic.crawler
 
-import com.melvic.crawler.Crawler.ZRecordData
+import com.melvic.crawler.Crawler.ZState
 import com.melvic.crawler.Output.Record
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.syntax._
@@ -23,9 +23,10 @@ object Output {
   def error(errorMessage: String): Output =
     Output(Nil, error = Some(errorMessage))
 
-  def fromRecordData(recordData: ZRecordData): Program[Output] =
-    recordData.either.map {
-      case Right(links) => fromResults(links.map { case (data, url) => Record(url, data) })
+  def fromZState(zState: ZState): Program[Output] =
+    zState.either.map {
+      case Right(state) =>
+        fromResults(state.table.map { case (url, data) => Record(url, "") }.toList)
       case Left(error)  => Output.error(error.getMessage)
     }
 

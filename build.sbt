@@ -10,7 +10,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "crawler",
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    libraryDependencies ++= Seq(`zio-test`, `zio-test-sbt`, `zio-http`, `zio-http-test`) ++ circeDependencies :+ jsoupDeps,
+    libraryDependencies ++= Seq(`zio-test`, `zio-test-sbt`, `zio-http`, `zio-http-test`) ++ crawlerDependencies,
   )
   .settings(
     Docker / version          := version.value,
